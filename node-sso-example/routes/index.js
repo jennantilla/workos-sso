@@ -23,8 +23,11 @@ const state = ''
 router.get('/', function (req, res) {
     if (session.isloggedin) {
         res.render('login_successful.ejs', {
-            profile: session.profile,
+            profile: session.profile, // stored for potential debugging/bonus features; not rendered
             first_name: session.first_name,
+            last_name: session.last_name,
+            organization_id: session.organization_id,
+            organization_name: session.organization_name,
         })
     } else {
         res.render('index.ejs', { title: 'Home' })
@@ -67,11 +70,23 @@ router.get('/callback', async (req, res) => {
                 code,
                 clientID,
             })
+            
+            // Store full profile for potential debugging/bonus features 
             const json_profile = JSON.stringify(profile, null, 4)
 
             session.first_name = profile.profile.first_name
+            session.last_name = profile.profile.last_name
+            session.organization_id = profile.profile.organization_id
             session.profile = json_profile
             session.isloggedin = true
+
+            // Get Organization info
+            const org = await workos.organizations.getOrganization(
+                profile.profile.organization_id,
+            );
+
+            // Store Org Name for rendering
+            session.organization_name = org.name;
         }
     } catch (error) {
         errorMessage = `Error exchanging code for profile: ${error}`
